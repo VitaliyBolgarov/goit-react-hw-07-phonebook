@@ -1,16 +1,73 @@
+import React from 'react';
+import { ContactForm } from './ContactForm/ContactForm';
+import { ContactList } from './ContactList/ContactList';
+import { Filter } from './ContactFilter/ContactFilter';
+import {
+  Container,
+  TitlePhoneBook,
+  TitleContacts,
+  TitleError,
+  Spinner,
+} from './AppStyled';
+import { useSelector, useDispatch } from 'react-redux';
+import { filterContacts } from '../redux/filter';
+import {
+  useGetAllContactsQuery,
+  useAddContactMutation,
+  useDeleteContactMutation,
+} from 'redux/contacts';
+import toast, { Toaster } from 'react-hot-toast';
+
 export const App = () => {
+  const dispatch = useDispatch();
+  const filterContact = useSelector(state => state.filter.value);
+
+  const { data: contacts, error, isFetching } = useGetAllContactsQuery();
+  const [createContact, isSuccess] = useAddContactMutation();
+  const [deleteContact] = useDeleteContactMutation();
+
+  const showContacts = contacts && !isFetching;
+  const errorMessage = 'Sorry , no data found.';
+
+  const addContact = ({ name, number }) => {
+    createContact({ name, number });
+    if (isSuccess) {
+      toast.success(`${name} successfully adding in the phonebook`);
+      return;
+    }
+  };
+
+  const onFilter = e => {
+    dispatch(filterContacts(e.currentTarget.value));
+  };
+
+  let visibleContacts = [];
+  const normalizedFilter = filterContact.toLowerCase();
+  if (showContacts) {
+    visibleContacts = contacts.filter(data =>
+      data.name.toLowerCase().includes(normalizedFilter)
+    );
+  }
+
   return (
-    <div
-      style={{
-        
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        fontSize: 40,
-        color: '#010101'
-      }}
-    >
-      React homework template
-    </div>
+    <Container>
+      <TitlePhoneBook>Phonebook</TitlePhoneBook>
+      <ContactForm onSubmit={addContact} contacts={contacts} />
+      <TitleContacts>Contacts</TitleContacts>
+      <Filter filterValue={filterContact} onChange={onFilter} />
+      {isFetching && (
+        <Spinner
+          size={80}
+          thickness={180}
+          color="rgba(57, 172, 171, 1)"
+          secondaryColor="rgba(172, 57, 65, 0.45)"
+        />
+      )}
+      {showContacts && (
+        <ContactList contacts={visibleContacts} onDelete={deleteContact} />
+      )}
+      {error && <TitleError>{errorMessage}</TitleError>}
+      <Toaster position="top-right" reverseOrder={false} />
+    </Container>
   );
 };
