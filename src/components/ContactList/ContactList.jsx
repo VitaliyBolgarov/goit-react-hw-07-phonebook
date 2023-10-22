@@ -1,18 +1,25 @@
-import { ContactItem } from 'components/ContactItem/ContactItem';
-import { List } from './ContactListStyled';
+import { useSelector } from 'react-redux';
 
-export const ContactList = ({ contacts, onDelete }) => {
+import { selectContactsFilter, selectContactsList } from 'redux/selectors';
+
+import { ContactsListItem } from '../ContactListItem/ContactListItem';
+
+import { ContactsList } from './ContactList.module';
+
+export const ContactList = () => {
+  const contacts = useSelector(selectContactsList);
+  const filter = useSelector(selectContactsFilter);
+  const visibleContacts = [
+    ...contacts.filter(contact => contact.name.toLowerCase().includes(filter)),
+  ];
+
+  console.log(visibleContacts);
+
   return (
-    <List>
-      {contacts.map(({ name, phone, id }) => (
-        <ContactItem
-          key={id}
-          name={name}
-          id={id}
-          phone={phone}
-          onDelete={onDelete}
-        />
+    <ContactsList>
+      {visibleContacts.map(({ name, phone, id }) => (
+        <ContactsListItem key={id} id={id} name={name} number={phone} />
       ))}
-    </List>
+    </ContactsList>
   );
 };
